@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  api_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Start application
+        run: docker compose up -d
+
+      - name: Run tests
+        run: docker compose --profile test run --rm tests
+
+      - name: Docker status
+        if: always()
+        run: docker compose ps
+
+      - name: Collect Docker logs
+        if: always()
+        run: docker compose logs > docker-logs.txt
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: tests/reports/
+
+      - name: Upload Docker logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: docker-logs.txt
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
