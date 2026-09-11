@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.053" timestamp="2026-08-26T20:42:17.229779+00:00" hostname="5e99d6bdbe8e"><testcase classname="test_api" name="test_health" time="0.004"><failure message="assert 200 == 500&#10; +  where 200 = &lt;Response [200]&gt;.status_code">def test_health():
+        response = requests.get("http://api:8000/health")
+&gt;       assert response.status_code == 500
+E       assert 200 == 500
+E        +  where 200 = &lt;Response [200]&gt;.status_code
+
+test_api.py:5: AssertionError</failure></testcase></testsuite></testsuites>

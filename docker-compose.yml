@@ -1,0 +1,41 @@
+services:
+
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    env_file:
+    - .env.test
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+  
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: testdb
+  
+  tests:
+    build: ./tests
+
+    volumes:
+      - ./tests/reports:/reports
+    
+    profiles:
+      - test
+
+    command: >
+      pytest -v
+      --html=/reports/report.html
+      --self-contained-html
+      --junitxml=/reports/results.xml
+
+    depends_on:
+      api:
+        condition: service_healthy
