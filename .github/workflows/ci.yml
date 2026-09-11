@@ -10,6 +10,13 @@ jobs:
   api_tests:
     runs-on: ubuntu-latest
 
+    outputs:
+      execution_status: ${{ steps.evaluate.outputs.execution_status }}
+      report_exists: ${{ steps.evaluate.outputs.report_exists }}
+      tests_total: ${{ steps.evaluate.outputs.tests_total }}
+      tests_failed: ${{ steps.evaluate.outputs.tests_failed }}
+      tests_errors: ${{ steps.evaluate.outputs.tests_errors }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,8 +27,50 @@ jobs:
       - name: Start application
         run: docker compose up -d
 
-      - name: Run tests
+      - name: Run API tests
+        id: tests
+        continue-on-error: true
         run: docker compose --profile test run --rm tests
+
+      - name: Evaluate test results
+        id: evaluate
+        if: always()
+        run: |
+          REPORT="tests/reports/results.xml"
+
+          if [ ! -f "$REPORT" ]; then
+            echo "execution_status=infrastructure_error" >> "$GITHUB_OUTPUT"
+            echo "report_exists=false" >> "$GITHUB_OUTPUT"
+            echo "tests_total=0" >> "$GITHUB_OUTPUT"
+            echo "tests_failed=0" >> "$GITHUB_OUTPUT"
+            echo "tests_errors=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+
+          report = "tests/reports/results.xml"
+          root = ET.parse(report).getroot()
+
+          total = int(root.attrib.get("tests", 0))
+          failures = int(root.attrib.get("failures", 0))
+          errors = int(root.attrib.get("errors", 0))
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("report_exists=true\n")
+              f.write(f"tests_total={total}\n")
+              f.write(f"tests_failed={failures}\n")
+              f.write(f"tests_errors={errors}\n")
+
+              if failures > 0:
+                  f.write("execution_status=test_failure\n")
+              elif errors > 0:
+                  f.write("execution_status=test_execution_error\n")
+              else:
+                  f.write("execution_status=success\n")
+          PY
 
       - name: Docker status
         if: always()
@@ -48,3 +97,46 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose down -v
+
+  quality_gate:
+    if: always()
+    needs: api_tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show API test results
+        run: |
+          echo "Execution status: ${{ needs.api_tests.outputs.execution_status }}"
+          echo "Report exists:    ${{ needs.api_tests.outputs.report_exists }}"
+          echo "Tests total:      ${{ needs.api_tests.outputs.tests_total }}"
+          echo "Tests failed:     ${{ needs.api_tests.outputs.tests_failed }}"
+          echo "Tests errors:     ${{ needs.api_tests.outputs.tests_errors }}"
+
+      - name: Evaluate quality gate
+        run: |
+          STATUS="${{ needs.api_tests.outputs.execution_status }}"
+          REPORT="${{ needs.api_tests.outputs.report_exists }}"
+          FAILED="${{ needs.api_tests.outputs.tests_failed }}"
+          ERRORS="${{ needs.api_tests.outputs.tests_errors }}"
+
+          if [ "$REPORT" != "true" ]; then
+            echo "QUALITY GATE FAILED: test report does not exist"
+            exit 1
+          fi
+
+          if [ "$STATUS" != "success" ]; then
+            echo "QUALITY GATE FAILED: execution status = $STATUS"
+            exit 1
+          fi
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "QUALITY GATE FAILED: $FAILED tests failed"
+            exit 1
+          fi
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "QUALITY GATE FAILED: $ERRORS tests had errors"
+            exit 1
+          fi
+
+          echo "QUALITY GATE PASSED"
