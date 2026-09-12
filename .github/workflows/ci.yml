@@ -159,7 +159,7 @@ jobs:
       #     echo "QUALITY GATE PASSED"
       - name: Evaluate matrix result
         run: |
-          RESULT = ${{ needs.api_tests.result }}
+          RESULT="${{ needs.api_tests.result }}"
 
           if [ "$RESULT" != "success" ]; then
             echo "QUALITY GATE FAILED: matrix result = $RESULT"
