@@ -121,39 +121,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Show API test results
+      # - name: Show API test results
+      #   run: |
+      #     echo "Execution status: ${{ needs.api_tests.outputs.execution_status }}"
+      #     echo "Report exists:    ${{ needs.api_tests.outputs.report_exists }}"
+      #     echo "Tests total:      ${{ needs.api_tests.outputs.tests_total }}"
+      #     echo "Tests failed:     ${{ needs.api_tests.outputs.tests_failed }}"
+      #     echo "Tests errors:     ${{ needs.api_tests.outputs.tests_errors }}"
+
+      # - name: Evaluate quality gate
+      #   run: |
+      #     STATUS="${{ needs.api_tests.outputs.execution_status }}"
+      #     REPORT="${{ needs.api_tests.outputs.report_exists }}"
+      #     FAILED="${{ needs.api_tests.outputs.tests_failed }}"
+      #     ERRORS="${{ needs.api_tests.outputs.tests_errors }}"
+
+      #     if [ "$REPORT" != "true" ]; then
+      #       echo "QUALITY GATE FAILED: test report does not exist"
+      #       exit 1
+      #     fi
+
+      #     if [ "$STATUS" != "success" ]; then
+      #       echo "QUALITY GATE FAILED: execution status = $STATUS"
+      #       exit 1
+      #     fi
+
+      #     if [ "$FAILED" -gt 0 ]; then
+      #       echo "QUALITY GATE FAILED: $FAILED tests failed"
+      #       exit 1
+      #     fi
+
+      #     if [ "$ERRORS" -gt 0 ]; then
+      #       echo "QUALITY GATE FAILED: $ERRORS tests had errors"
+      #       exit 1
+      #     fi
+
+      #     echo "QUALITY GATE PASSED"
+      - name: Evaluate matrix result
         run: |
-          echo "Execution status: ${{ needs.api_tests.outputs.execution_status }}"
-          echo "Report exists:    ${{ needs.api_tests.outputs.report_exists }}"
-          echo "Tests total:      ${{ needs.api_tests.outputs.tests_total }}"
-          echo "Tests failed:     ${{ needs.api_tests.outputs.tests_failed }}"
-          echo "Tests errors:     ${{ needs.api_tests.outputs.tests_errors }}"
+          RESULT = ${{ needs.api_tests.result }}
 
-      - name: Evaluate quality gate
-        run: |
-          STATUS="${{ needs.api_tests.outputs.execution_status }}"
-          REPORT="${{ needs.api_tests.outputs.report_exists }}"
-          FAILED="${{ needs.api_tests.outputs.tests_failed }}"
-          ERRORS="${{ needs.api_tests.outputs.tests_errors }}"
-
-          if [ "$REPORT" != "true" ]; then
-            echo "QUALITY GATE FAILED: test report does not exist"
+          if [ "$RESULT" != "success" ]; then
+            echo "QUALITY GATE FAILED: matrix result = $RESULT"
             exit 1
           fi
-
-          if [ "$STATUS" != "success" ]; then
-            echo "QUALITY GATE FAILED: execution status = $STATUS"
-            exit 1
-          fi
-
-          if [ "$FAILED" -gt 0 ]; then
-            echo "QUALITY GATE FAILED: $FAILED tests failed"
-            exit 1
-          fi
-
-          if [ "$ERRORS" -gt 0 ]; then
-            echo "QUALITY GATE FAILED: $ERRORS tests had errors"
-            exit 1
-          fi
-
           echo "QUALITY GATE PASSED"
