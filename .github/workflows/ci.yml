@@ -33,11 +33,19 @@ jobs:
 
       - name: Start application
         run: docker compose up -d
+      
+      - name: Run shard
+        run: |
+          docker compose --profile test run --rm tests \
+            pytest \
+            --splits 4 \
+            --group ${{ matrix.shard }} \
+            --junitxml=/reports/results-${{ matrix.shard }}.xml
 
-      - name: Run API tests
-        id: tests
-        continue-on-error: true
-        run: docker compose --profile test run --rm tests
+      # - name: Run API tests
+      #   id: tests
+      #   continue-on-error: true
+      #   run: docker compose --profile test run --rm tests
 
       - name: Evaluate test results
         id: evaluate
@@ -93,7 +101,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: test-reports-${{ matrix.shard }}
           path: tests/reports/
 
       - name: Upload Docker logs
