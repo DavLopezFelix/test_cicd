@@ -31,7 +31,7 @@ services:
       - test
 
     command: >
-      pytest -n 4
+      pytest -v
       --html=/reports/report.html
       --self-contained-html
       --junitxml=/reports/results.xml
