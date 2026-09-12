@@ -16,10 +16,17 @@ jobs:
       tests_total: ${{ steps.evaluate.outputs.tests_total }}
       tests_failed: ${{ steps.evaluate.outputs.tests_failed }}
       tests_errors: ${{ steps.evaluate.outputs.tests_errors }}
+    
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Show shard
+        run: echo "Running shard ${{ matrix.shard }}"
 
       - name: Build containers
         run: docker compose build
