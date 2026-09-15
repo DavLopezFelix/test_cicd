@@ -171,9 +171,9 @@ jobs:
           import sys
           import xml.etree.ElementTree as ET
 
-          reports = glob.glob("reports/*.xml")
+          files = glob.glob("reports/*.xml")
 
-          if not reports:
+          if not files:
               print("QUALITY GATE FAILED: no test reports found")
               sys.exit(1)
 
