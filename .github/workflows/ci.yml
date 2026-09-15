@@ -102,7 +102,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-${{ matrix.shard }}
-          path: tests/reports/
+          path: tests/reports/results-${{ matrix.shard }}.xml
 
       - name: Upload Docker logs
         if: always()
@@ -157,12 +157,51 @@ jobs:
       #     fi
 
       #     echo "QUALITY GATE PASSED"
-      - name: Evaluate matrix result
-        run: |
-          RESULT="${{ needs.api_tests.result }}"
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: api-report-*
+          path: reports
+          merge-multiple: true
 
-          if [ "$RESULT" != "success" ]; then
-            echo "QUALITY GATE FAILED: matrix result = $RESULT"
-            exit 1
-          fi
-          echo "QUALITY GATE PASSED"
+      - name: Evaluate reports
+        run: |
+          python << 'PY'
+          import glob
+          import sys
+          import xml.etree.ElementTree as ET
+
+          reports = glob.glob("reports/*.xml")
+
+          if not reports:
+              print("QUALITY GATE FAILED: no test reports found")
+              sys.exit(1)
+
+          total = 0
+          failures = 0
+          errors = 0
+
+          for file in files:
+            root = ET.parse(file).getroot()
+
+            suites = (
+                [root]
+                if root.tag == "testsuite"
+                else root.findall("testsuite")
+            )
+
+            for suite in suites:
+                total += int(suite.attrib.get("tests", 0))
+                failures += int(suite.attrib.get("failures", 0))
+                errors += int(suite.attrib.get("errors", 0))
+
+            print(f"Total tests: {total}")
+            print(f"Failures: {failures}")
+            print(f"Errors: {errors}")
+
+            if failures > 0 or errors > 0:
+                print("QUALITY GATE FAILED")
+                sys.exit(1)
+
+            print("QUALITY GATE PASSED")
+            PY
