@@ -182,26 +182,26 @@ jobs:
           errors = 0
 
           for file in files:
-            root = ET.parse(file).getroot()
+              root = ET.parse(file).getroot()
 
-            suites = (
-                [root]
-                if root.tag == "testsuite"
-                else root.findall("testsuite")
-            )
+              suites = (
+                  [root]
+                  if root.tag == "testsuite"
+                  else root.findall("testsuite")
+              )
 
-            for suite in suites:
-                total += int(suite.attrib.get("tests", 0))
-                failures += int(suite.attrib.get("failures", 0))
-                errors += int(suite.attrib.get("errors", 0))
+              for suite in suites:
+                  total += int(suite.attrib.get("tests", 0))
+                  failures += int(suite.attrib.get("failures", 0))
+                  errors += int(suite.attrib.get("errors", 0))
 
-            print(f"Total tests: {total}")
-            print(f"Failures: {failures}")
-            print(f"Errors: {errors}")
+          print(f"Total tests: {total}")
+          print(f"Failures: {failures}")
+          print(f"Errors: {errors}")
 
-            if failures > 0 or errors > 0:
-                print("QUALITY GATE FAILED")
-                sys.exit(1)
+          if failures > 0 or errors > 0:
+              print("QUALITY GATE FAILED")
+              sys.exit(1)
 
-            print("QUALITY GATE PASSED")
-            PY
+          print("QUALITY GATE PASSED")
+          PY
