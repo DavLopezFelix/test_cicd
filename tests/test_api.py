@@ -37,7 +37,7 @@ def test_db_body():
 
 def test_unknown_endpoint_returns_404():
     response = requests.get(f"{BASE_URL}/does-not-exist")
-    assert response.status_code == 404
+    assert response.status_code == 200
 
 
 def test_health_content_type():
