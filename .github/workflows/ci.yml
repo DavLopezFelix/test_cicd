@@ -221,7 +221,7 @@ jobs:
           echo "API URL: ${{ vars.API_URL   }}"
     
   deploy_production:
-    needs: deply_staging
+    needs: deploy_staging
     runs-on: ubuntu-latest
 
     environment:
@@ -232,4 +232,3 @@ jobs:
         run: |
           echo "Deploying to production environment"
           echo "API URL: ${{ vars.API_URL }}"
-          
