@@ -18,6 +18,7 @@ jobs:
       tests_errors: ${{ steps.evaluate.outputs.tests_errors }}
     
     strategy:
+      fail-fast: false
       matrix:
         shard: [1, 2, 3, 4]
 
